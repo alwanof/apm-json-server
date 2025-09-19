@@ -1,37 +1,52 @@
-## Deploy JSON Server to Vercel
+# APM JSON Server
 
-A template to deploy [JSON Server](https://github.com/typicode/json-server) to [Vercel](https://vercel.com), allow you to run fake REST API online!
+This repository packages [`json-server`](https://github.com/typicode/json-server) with a small Express wrapper so it can be
+easily deployed (for example to Vercel). In addition to the appointment data exposed by the JSON router, the server now
+provides a very small login demonstration that verifies incoming passwords using an MD5 hash.
 
-Demo from this repository: 
+> **Note:** MD5 is not suitable for production password storage or verification. It is used here solely because the
+> exercise explicitly requests it.
 
-1. https://json-server-in.vercel.app
-2. https://json-server-in.vercel.app/api/posts
+## Available data
 
-### How to use
+`db.json` ships with two collections:
 
-1. Click "**Use this template**" or clone this repository.
-2. Update or use the default [`db.json`](./db.json) in the repository.
-3. Sign Up or login into [Vercel](https://vercel.com).
-4. From the Vercel dashboard, click "**+ New Project**" then "**Import**" your repository.
-5. In the "**Configure Project**" screen, leave everything default and click "**Deploy**".
-6. Wait until deployment is done, and your own JSON server is ready to serve!
+- `apm`: appointment slots that remain available through the standard JSON Server router.
+- `users`: contains demo credentials with pre-computed MD5 password hashes used by the login endpoint.
 
-## Default `db.json`
+## Login endpoint
+
+`POST /login`
+
+Request body:
 
 ```json
 {
-  "posts": [
-    { "id": 1, "title": "json-server", "author": "typicode" }
-  ],
-  "comments": [
-    { "id": 1, "body": "some comment", "postId": 1 }
-  ],
-  "profile": { "name": "typicode" }
+  "username": "demo",
+  "password": "123"
 }
 ```
 
-## Reference
+Response on success:
 
-1. https://github.com/typicode/json-server
-2. https://vercel.com
-3. https://shadowsmith.com/how-to-deploy-an-express-api-to-vercel
+```json
+{
+  "message": "Login successful"
+}
+```
+
+The handler looks up the requested user in `db.json`, hashes the submitted password with MD5, and compares it against the
+stored hash. A `401` response is returned when the credentials do not match, and a `400` response is returned when either
+field is missing.
+
+Because the server uses the JSON Router for other resources, you can still access the appointment data at `/apm` or via
+the `/api` namespace that Vercel expects (for example, `GET /api/apm`).
+
+## Running locally
+
+```bash
+pnpm install
+pnpm start
+```
+
+The server listens on port `3000` by default.
